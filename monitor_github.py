@@ -9,7 +9,10 @@ import requests
 import os
 import smtplib
 import time
-from datetime import datetime
+from datetime import datetime, timezone
+
+def utcnow():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from bs4 import BeautifulSoup
@@ -105,7 +108,7 @@ def buscar_en_url(url_info):
             "encontrado": False,
             "terminos": [],
             "error": "No se pudo acceder al sitio tras 3 intentos",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": utcnow().isoformat()
         }
 
     texto_lower = texto.lower()
@@ -124,7 +127,7 @@ def buscar_en_url(url_info):
         "url": url,
         "encontrado": len(encontrados) > 0,
         "terminos": encontrados,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": utcnow().isoformat()
     }
 
 
@@ -158,7 +161,7 @@ def enviar_email_alerta(resultados_positivos):
         cuerpo += "-" * 60 + "\n\n"
 
     cuerpo += "IMPORTANTE: Revisa manualmente los sitios para confirmar la informacion.\n"
-    cuerpo += f"\nAlerta generada el {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+    cuerpo += f"\nAlerta generada el {utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
 
     mensaje.attach(MIMEText(cuerpo, 'plain', 'utf-8'))
 
@@ -178,7 +181,7 @@ def guardar_resultados(todos_resultados):
     """
     Guarda un resumen de la ejecucion en resultados.txt
     """
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+    timestamp = utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
 
     with open('resultados.txt', 'w', encoding='utf-8') as f:
         f.write("=" * 70 + "\n")
@@ -220,7 +223,7 @@ def main():
     print("=" * 70)
     print("MONITOR AUTOMATICO - BUSQUEDA DE ANUBIS OCTAVIO CLAVIJO VALENCIA")
     print("=" * 70)
-    print(f"Inicio: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    print(f"Inicio: {utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
     print(f"Terminos de busqueda: {len(NOMBRES_BUSCAR)}")
     print(f"Sitios a revisar: {len(URLS_MONITOREAR)}")
     print(f"Email alertas: {EMAIL_DESTINO}")
@@ -245,7 +248,7 @@ def main():
         print("No se encontraron coincidencias en esta ejecucion")
     print("=" * 70)
 
-    print(f"\nEjecucion completada: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    print(f"\nEjecucion completada: {utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
 
 
 if __name__ == "__main__":
