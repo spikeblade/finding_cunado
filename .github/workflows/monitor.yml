@@ -5,9 +5,11 @@ on:
     - cron: '0 8 * * *'   # Corre cada dia a las 8am UTC
   push:
     branches: [master]
+    paths-ignore:
+      - 'historial.json'  # El commit del historial no re-dispara el workflow
   pull_request:
     branches: [master]
-  workflow_dispatch:       # Permite correrlo manualmente
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -31,8 +33,10 @@ jobs:
   buscar:
     name: Buscar a Anubis
     runs-on: ubuntu-latest
-    needs: tests                  # Solo corre si los tests pasan
+    needs: tests
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write   # Necesario para hacer push del historial.json
 
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +57,15 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: python monitor_github.py
+
+      - name: Guardar historial en el repositorio
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add historial.json || true
+          git diff --staged --quiet || git commit -m "chore: actualizar historial de busqueda [skip ci]"
+          git push || true
 
       - name: Guardar resultados como artefacto
         if: always()
